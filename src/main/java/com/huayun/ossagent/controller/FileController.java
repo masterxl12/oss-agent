@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -37,13 +38,13 @@ public class FileController {
     }
 
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
-    public String upload(@RequestParam String bucketName, @RequestParam String filePath, @RequestParam MultipartFile file) {
-        return fileService.upload(bucketName, filePath, file);
+    public String upload(@RequestParam String bucketName, @RequestParam String remotePath, @RequestParam MultipartFile file) {
+        return fileService.upload(bucketName, remotePath, file);
     }
 
     @RequestMapping(value = "/uploads", method = RequestMethod.POST)
-    public String uploads(@RequestParam String bucketName, @RequestParam String filePath, @RequestParam MultipartFile[] files) {
-        return fileService.uploads(bucketName, filePath, files);
+    public String uploads(@RequestParam String bucketName, @RequestParam String remotePath, @RequestParam MultipartFile[] files) {
+        return fileService.uploads(bucketName, remotePath, files);
     }
 
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
@@ -53,15 +54,18 @@ public class FileController {
     }
 
     @RequestMapping(value = "/deletefiles", method = RequestMethod.POST)
-    public String deletefiles(@RequestParam String bucketName, @RequestParam String[] objectName) {
-        return fileService.deleteFiles(bucketName, objectName);
+    public String deletefiles(@RequestParam String bucketName, @RequestParam String[] objects) {
+        return fileService.deleteFiles(bucketName, objects);
 
     }
 
     @RequestMapping(value = "/download", method = RequestMethod.POST)
-    public String download(@RequestParam String bucketName, @RequestParam String objectName, @RequestParam String localPath) {
-        return fileService.download(bucketName, objectName, localPath);
+    public String download(@RequestParam String bucketName, @RequestParam String remoteObject, @RequestParam String localPath) {
+        return fileService.download(bucketName, remoteObject, localPath);
     }
 
-
+    @RequestMapping(value = "/downloads", method = RequestMethod.POST)
+    public String downloads(@RequestParam String bucketName, @RequestParam ArrayList<String> remoteObjects, @RequestParam String localPath) {
+        return fileService.downloads(bucketName, remoteObjects, localPath);
+    }
 }

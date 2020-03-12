@@ -92,15 +92,15 @@ public class FileService {
      * 单文件上传
      *
      * @param bucketName
-     * @param basePath
+     * @param remotePath
      * @param file
      * @return
      */
-    public String upload(String bucketName, String basePath, MultipartFile file) {
+    public String upload(String bucketName, String remotePath, MultipartFile file) {
         String uploadTips = "";
         OSSClient client = ossClient.getOssClient();
         String fileName = file.getOriginalFilename();
-        String uploadPath = basePath + "/" + fileName;
+        String uploadPath = remotePath + "/" + fileName;
         boolean exists = client.doesBucketExist(bucketName);
         if (exists) {
             // 创建PutObjectRequest对象。
@@ -115,13 +115,13 @@ public class FileService {
                 e.printStackTrace();
             }
         } else {
-            uploadTips = "文件 " + bucketName + " 上传失败！";
+            uploadTips = "文件 " + file + " 上传失败！";
         }
         client.shutdown();
         return uploadTips;
     }
 
-    public String uploads(String bucketName, String filePath, MultipartFile[] files) {
+    public String uploads(String bucketName, String remotePath, MultipartFile[] files) {
         String uploadTips = "";
         OSSClient client = ossClient.getOssClient();
         boolean exists = client.doesBucketExist(bucketName);
@@ -136,19 +136,19 @@ public class FileService {
                     e.printStackTrace();
                 }
                 // 如果是直接上传到存储桶下，传入filePath = "/"即可
-                if (filePath.equals("/")) {
+                if (remotePath.equals("/")) {
                     PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, fileName, inputStream);
                     client.putObject(putObjectRequest);
                     uploadTips += fileName + ",";
                 } else { // 如果是上传到存储桶指定的子集目录下，形如filePath = "xxx/yyy"格式即可
-                    String uploadPath = filePath + "/" + fileName;
+                    String uploadPath = remotePath + "/" + fileName;
                     PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, uploadPath, inputStream);
                     client.putObject(putObjectRequest);
                 }
             }
             uploadTips = "OK! " + uploadTips + " 上传成功！";
         } else {
-            uploadTips = "文件 " + bucketName + " 上传失败！";
+            uploadTips = "文件上传到 " + remotePath + " 失败！";
         }
         client.shutdown();
         return uploadTips;
@@ -215,41 +215,73 @@ public class FileService {
     /**
      * 文件下载功能
      *
-     * @param bucketName 存储桶名
-     * @param objectName oss服务的文件对象名
-     * @param localPath  oss服务的文件对象名
+     * @param bucketName   存储桶名
+     * @param remoteObject oss服务的文件对象名
+     * @param localPath    oss服务的文件对象名
      * @return
      */
-    public String download(String bucketName, String objectName, String localPath) {
+    public String download(String bucketName, String remoteObject, String localPath) {
         String downloadTips = "";
         OSSClient client = ossClient.getOssClient();
         boolean exist = client.doesBucketExist(bucketName);
-        boolean bucketExist = client.doesObjectExist(bucketName, objectName);
+        boolean bucketExist = client.doesObjectExist(bucketName, remoteObject);
         if (exist && bucketExist) {
             // 指定文件保存路径
-            File file = null;
-            String filePath = "";
 //            if (objectName.contains("/")) {
 //                //判断文件目录是否存在，不存在则创建
 //                filePath = localPath;
 //            } else { // objectName没有"/"这种情况，也即objectName对象直接存储在存储桶一级目录下
 //                filePath = localPath + "/" + objectName;
 //            }
-            filePath = localPath;
-            file = new File(filePath);
+            String filePath = localPath;
+            File file = new File(filePath);
             if (!file.exists()) {
                 file.mkdirs();
             }
             //判断保存文件名是否加后缀
-            if (objectName.contains(".")) {
+            if (remoteObject.contains(".")) {
                 //指定文件保存名称
-                filePath = filePath + "/" + objectName.substring(objectName.lastIndexOf("/") + 1);
+                filePath = filePath + "/" + remoteObject.substring(remoteObject.lastIndexOf("/") + 1);
             }
             //获取OSS文件并保存到本地指定路径中，此文件路径一定要存在，若保存目录不存在则报错，若保存文件名已存在则覆盖本地文件
-            client.getObject(new GetObjectRequest(bucketName, objectName), new File(filePath));
-            downloadTips = "oK，" + objectName + "文件下载成功";
+            client.getObject(new GetObjectRequest(bucketName, remoteObject), new File(filePath));
+            downloadTips = "oK，" + remoteObject + "文件下载成功";
         } else {
+            downloadTips = "下载文件失败!";
+        }
+        client.shutdown();
+        return downloadTips;
+    }
 
+    /**
+     * 批量下载功能
+     * @param bucketName
+     * @param remoteObjects
+     * @param localPath
+     * @return
+     */
+    public String downloads(String bucketName, ArrayList<String> remoteObjects, String localPath) {
+        String downloadTips = "";
+        OSSClient client = ossClient.getOssClient();
+        boolean exist = client.doesBucketExist(bucketName);
+        if (exist) {
+            String filePath = localPath;
+            File file = new File(filePath);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+            for (String remoteObject : remoteObjects) {
+                //判断保存文件名是否加后缀
+                if (remoteObject.contains(".")) {
+                    //指定文件保存名称
+                    filePath = filePath + "/" + remoteObject.substring(remoteObject.lastIndexOf("/") + 1);
+                }
+                //获取OSS文件并保存到本地指定路径中，此文件路径一定要存在，若保存目录不存在则报错，若保存文件名已存在则覆盖本地文件
+                client.getObject(new GetObjectRequest(bucketName, remoteObject), new File(filePath));
+                downloadTips += "oK，" + remoteObject + "文件下载成功" + "\n";
+                filePath = filePath.substring(0,filePath.lastIndexOf("/"));
+            }
+        } else {
             downloadTips = "下载文件失败!";
         }
         client.shutdown();
@@ -265,6 +297,7 @@ public class FileService {
         String filePath2 = fileName.substring(fileName.lastIndexOf("/") + 1);
         System.out.println(filePath1);
         System.out.println(filePath2);
+        System.out.println(fileName.substring(0,fileName.lastIndexOf("/")));
 //        fileService.download("oss-xl", "1.png");
 
 //        String a = "abc, 123,fff";
