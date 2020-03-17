@@ -1,5 +1,6 @@
 package com.huayun.ossagent.controller;
 
+import com.aliyun.oss.OSSClient;
 import com.huayun.ossagent.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -57,6 +58,16 @@ public class FileController {
     public String deletefiles(@RequestParam String bucketName, @RequestParam String[] objects) {
         return fileService.deleteFiles(bucketName, objects);
 
+    }
+
+    @RequestMapping(value = "getKeys", method = RequestMethod.GET)
+    public ArrayList getKeys(@RequestParam String bucketName, @RequestParam String fileName) {
+        return fileService.getFilesKey(bucketName, fileName);
+    }
+
+    @RequestMapping(value = "/deleteDir", method = RequestMethod.POST)
+    public String deleteDir(@RequestParam String bucketName, @RequestParam String dirName) {
+        return fileService.deleteDir(bucketName, dirName);
     }
 
     @RequestMapping(value = "/download", method = RequestMethod.POST)

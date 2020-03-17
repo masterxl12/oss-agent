@@ -178,38 +178,85 @@ public class FileService {
     }
 
     /**
-     * bucketName  存储桶名称
-     * objects     删除文件的字符
+     * 批量删除
      *
+     * @param bucketName
+     * @param files
      * @return
      */
-    // 每一个文件对象以";"分割
-//    public String deleteFiles(String bucketName, String objects) {
-//        String deleteTips = "";
-//        OSSClient client = ossClient.getOssClient();
-//        List<String> keys = new ArrayList<String>();
-//        String[] arr = objects.split(";");
-//        for (int i = 0; i < arr.length; i++) {
-//            keys.add(arr[i]);
-//        }
-//        DeleteObjectsResult deleteObjectsResult = client.deleteObjects(new DeleteObjectsRequest(bucketName).withKeys(keys));
-//        List<String> deletedObjects = deleteObjectsResult.getDeletedObjects();
-//        deleteTips = "文件批量删除成功!";
-//        client.shutdown();
-//        return deleteTips;
-//    }
     public String deleteFiles(String bucketName, String[] files) {
         String deleteTips = "";
         OSSClient client = ossClient.getOssClient();
         List<String> keys = new ArrayList<>();
         for (int i = 0; i < files.length; i++) {
             keys.add(files[i]);
+            deleteTips += "文件对象: " + files[i] + "\n";
         }
         DeleteObjectsResult deleteObjectsResult = client.deleteObjects(new DeleteObjectsRequest(bucketName).withKeys(keys));
         List<String> deletedObjects = deleteObjectsResult.getDeletedObjects();
-        deleteTips = "文件批量删除成功!";
+        deleteTips += "批量删除成功!";
         client.shutdown();
         return deleteTips;
+    }
+
+    /**
+     * 删除指定存储桶下的文件夹
+     * oss默认没有文件目录的概念，根据官网说明，只要把当前目录下的所有文件删除后，即能删除该目录
+     * 实现步骤：
+     * 0。oss在我们上传文件(api调用)/客户端/新建文件夹时,默认都会给文件对象绑定key(其实就是相对于
+     *          bucketName的相对路径名)，删除文件也要用到这个key，
+     *          ============================================================
+     *          官方删除文件对象的api:
+     *              client.deleteObject(String bucketName,String key)
+     *          因此: key(文件路径名) ====实现删除单个、多个、甚至是文件目录的关键===
+     *          ============================================================
+     * 1。将指定删除的目录名设为遍历查找的prefix(文件前缀)
+     * 2。根据prefix列出所有的key，添加到String[]
+     *    这里封装了一个getFilesKey(bucketName,fileName)的成员方法，方便获取keys
+     * 3。调用封装的deleFiles成员方法
+     *
+     * @param bucketName
+     * @param dirName
+     * @return
+     */
+    public String deleteDir(String bucketName, String dirName) {
+        String deleteTips = "";
+        OSSClient client = ossClient.getOssClient();
+        // 判断存储桶和文件夹对象是否存在
+        boolean bucketExist = client.doesBucketExist(bucketName);
+        ArrayList<String> lists = getFilesKey(bucketName, dirName);
+        String[] keysArr = new String[lists.size()];
+        lists.toArray(keysArr);
+        deleteTips = deleteFiles(bucketName, keysArr);
+        for (String item : keysArr) {
+            System.out.println(item);
+        }
+        return deleteTips;
+    }
+
+    /**
+     * 根据文件目录名获取当前目录下的所有keys
+     *
+     * @param bucketName
+     * @param fileName
+     * @return
+     */
+    public ArrayList<String> getFilesKey(String bucketName, String fileName) {
+        OSSClient client = ossClient.getOssClient();
+        // 构造ListObjectsRequest请求
+        ListObjectsRequest listObjectsRequest = new ListObjectsRequest(bucketName);
+//        //Delimiter 设置为 “/” 时，罗列该文件夹下的文件
+//        listObjectsRequest.setDelimiter("/");
+        //Prefix 设为某个文件夹名，罗列以此 Prefix 开头的文件
+        listObjectsRequest.setPrefix(fileName + "/");
+        ObjectListing listing = client.listObjects(listObjectsRequest);
+        ArrayList<String> list = new ArrayList<String>();
+        // 遍历所有Object:目录下的文件
+        for (OSSObjectSummary objectSummary : listing.getObjectSummaries()) {
+            String key = objectSummary.getKey();
+            list.add(key);
+        }
+        return list;
     }
 
     /**
@@ -255,6 +302,7 @@ public class FileService {
 
     /**
      * 批量下载功能
+     *
      * @param bucketName
      * @param remoteObjects
      * @param localPath
@@ -279,7 +327,7 @@ public class FileService {
                 //获取OSS文件并保存到本地指定路径中，此文件路径一定要存在，若保存目录不存在则报错，若保存文件名已存在则覆盖本地文件
                 client.getObject(new GetObjectRequest(bucketName, remoteObject), new File(filePath));
                 downloadTips += "oK，" + remoteObject + "文件下载成功" + "\n";
-                filePath = filePath.substring(0,filePath.lastIndexOf("/"));
+                filePath = filePath.substring(0, filePath.lastIndexOf("/"));
             }
         } else {
             downloadTips = "下载文件失败!";
@@ -297,7 +345,7 @@ public class FileService {
         String filePath2 = fileName.substring(fileName.lastIndexOf("/") + 1);
         System.out.println(filePath1);
         System.out.println(filePath2);
-        System.out.println(fileName.substring(0,fileName.lastIndexOf("/")));
+        System.out.println(fileName.substring(0, fileName.lastIndexOf("/")));
 //        fileService.download("oss-xl", "1.png");
 
 //        String a = "abc, 123,fff";
