@@ -1,4 +1,4 @@
-package com.huayun.ossagent;
+package com.xl.ossagent;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

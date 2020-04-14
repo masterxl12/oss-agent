@@ -1,7 +1,7 @@
-package com.huayun.ossagent.controller;
+package com.xl.ossagent.controller;
 
 import com.aliyun.oss.OSSClient;
-import com.huayun.ossagent.util.OssClient;
+import com.xl.ossagent.util.OssClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;

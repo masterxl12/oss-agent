@@ -1,14 +1,13 @@
-package com.huayun.ossagent.service;
+package com.xl.ossagent.service;
 
 import com.aliyun.oss.OSSClient;
 import com.aliyun.oss.model.*;
-import com.huayun.ossagent.util.OssClient;
+import com.xl.ossagent.util.OssClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -204,15 +203,15 @@ public class FileService {
      * oss默认没有文件目录的概念，根据官网说明，只要把当前目录下的所有文件删除后，即能删除该目录
      * 实现步骤：
      * 0。oss在我们上传文件(api调用)/客户端/新建文件夹时,默认都会给文件对象绑定key(其实就是相对于
-     *          bucketName的相对路径名)，删除文件也要用到这个key，
-     *          ============================================================
-     *          官方删除文件对象的api:
-     *              client.deleteObject(String bucketName,String key)
-     *          因此: key(文件路径名) ====实现删除单个、多个、甚至是文件目录的关键===
-     *          ============================================================
+     * bucketName的相对路径名)，删除文件也要用到这个key，
+     * ============================================================
+     * 官方删除文件对象的api:
+     * client.deleteObject(String bucketName,String key)
+     * 因此: key(文件路径名) ====实现删除单个、多个、甚至是文件目录的关键===
+     * ============================================================
      * 1。将指定删除的目录名设为遍历查找的prefix(文件前缀)
      * 2。根据prefix列出所有的key，添加到String[]
-     *    这里封装了一个getFilesKey(bucketName,fileName)的成员方法，方便获取keys
+     * 这里封装了一个getFilesKey(bucketName,fileName)的成员方法，方便获取keys
      * 3。调用封装的deleFiles成员方法
      *
      * @param bucketName

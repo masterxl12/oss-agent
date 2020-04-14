@@ -1,4 +1,4 @@
-package com.huayun.ossagent.util;
+package com.xl.ossagent.util;
 
 import com.aliyun.oss.OSSClient;
 import org.springframework.beans.factory.annotation.Value;
