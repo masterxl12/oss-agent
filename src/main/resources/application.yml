@@ -1,8 +1,8 @@
 oss:
   endpoint: oss-cn-hangzhou.aliyuncs.com
-  acceessKeyId: LTAI4FtQbho4RQgVL7bgL4ZG
-  accessKeySecret: HhPY51r7FUzdpPrccqqIG7DKrEqX1H
-  bucketName: oss-xl.oss-cn-hangzhou.aliyuncs.com
+  acceessKeyId: youId
+  accessKeySecret: youSecret
+  bucketName: youBucketName
   filePath: file-service
 server:
   port: 9000
